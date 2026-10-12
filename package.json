@@ -1,0 +1,106 @@
+{
+  "name": "dsh-squares",
+  "version": "0.1.0",
+  "description": "DSH Squares: An all-in-one sidebar for managing plugins / experts / skills / connectors / (compatible with both web and desktop).  DSH Squares（广场）：侧边栏一体化管理插件 / 专家 / 技能 / 连接器 / （Web 端与桌面端通用）",
+  "license": "MIT",
+  "author": "ai-tool-labs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-tool-labs/dsh-squares.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ai-tool-labs/dsh-squares/issues"
+  },
+  "homepage": "https://github.com/ai-tool-labs/dsh-squares#readme",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-plugins",
+    "dsh-plugin-market",
+    "dsh-skill",
+    "dsh-bundle",
+    "dsh-plugin-desktop",
+    "dsh-desktop",
+    "deepseek-harness",
+    "agent",
+    "skills",
+    "experts",
+    "mcp",
+    "connectors",
+    "plugin-manager"
+  ],
+  "type": "module",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
+    },
+    "./client": {
+      "types": "./build/client/client/index.d.ts",
+      "default": "./build/client.js"
+    }
+  },
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.1.7-rc.2"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer"
+      ]
+    }
+  },
+  "files": [
+    "build/**/*.js",
+    "build/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "install:deps": "pnpm install",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && node scripts/build-client.mjs",
+    "clean": "node clean.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json",
+    "smoke": "node smoke-test.mjs",
+    "test:routes": "node test/routes.test.mjs",
+    "check:client": "node scripts/check-client-bundle.mjs",
+    "test:catalog": "node test/catalog.test.mjs",
+    "test:plugins": "node test/plugins.test.mjs",
+    "test": "node smoke-test.mjs && node test/routes.test.mjs && node test/catalog.test.mjs && node test/plugins.test.mjs"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-mcp-client": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-scope": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-subprocess": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.4",
+    "js-yaml": "^4.1.0",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-skill": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.0.0",
+    "@types/react": "~18.3.1",
+    "esbuild": "^0.25.0",
+    "react": "^18.3.1",
+    "typescript": "^5.7.0"
+  }
+}

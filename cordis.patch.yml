@@ -1,0 +1,18 @@
+# dsh-squares bundle patch：把本插件的 Loader 条目插入 profile。
+#
+# 安装（任一 profile）：
+#   dsh plugin --profile web     add /absolute/path/to/packages/dsh-squares
+#   dsh plugin --profile desktop add /absolute/path/to/packages/dsh-squares
+#
+# 安装后需重启 harness（桌面端：退出并重新打开 DeepSeek Harness.app）。
+# 若 profile 未把本包并入 bundle 列表，可直接把下面的 insert 段合并进
+# $DSH_HOME/profiles/<profile>/cordis.patch.yml。
+- insert:
+    - id: square
+      name: 'dsh-squares'
+      config:
+        enableUi: true
+        enableSkills: true
+        enableExperts: true
+        enableConnectors: true
+        enableTool: true
