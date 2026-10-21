@@ -53,14 +53,16 @@ export class SquareService {
         if (config.enablePlaza) {
             const fetcher = new CachedFetcher(ctx, paths, config.catalogTtlMs);
             this.fetcher = fetcher;
+            // 远程内容源按配置启用：留空即不注册——本 fork 默认不拉取任何公开社区目录，
+            // 广场只呈现「我的提交」与「自建目录」，内容由部署方的配置自行接入。
             const sources = [
                 new MySubmissionsSource(submissionsCatalogPath(paths)),
-                new GitHubSkillsSource(),
-                new DshSkillsMarketSource(),
-                new DshMarketExpertsSource(),
-                new AgencyAgentsSource(),
-                new McpOfficialSource(),
-                new AwesomeDshPluginsSource(),
+                ...(config.skillsGithubRepos.length > 0 ? [new GitHubSkillsSource()] : []),
+                ...(config.skillsMarketUrl !== '' ? [new DshSkillsMarketSource()] : []),
+                ...(config.expertsMarketUrl !== '' ? [new DshMarketExpertsSource()] : []),
+                ...(config.agencyAgentsRepo !== '' ? [new AgencyAgentsSource()] : []),
+                ...(config.mcpRegistryUrl !== '' ? [new McpOfficialSource()] : []),
+                ...(config.pluginsCatalogUrl !== '' ? [new AwesomeDshPluginsSource()] : []),
                 new CustomCatalogSource(),
             ];
             this.registry = new SourceRegistry(sources, makeSourceCtx(ctx, config, paths, fetcher));

@@ -39,29 +39,29 @@ export const Config = z.object({
     enablePlaza: z.boolean().default(true).description('启用「广场」视图与 /catalog 数据面'),
     skillsGithubRepos: z
         .array(String)
-        .default(['anthropics/skills'])
-        .description('技能广场扫描的 GitHub 仓库（owner/repo，可多个）'),
+        .default([])
+        .description('技能广场扫描的 GitHub 仓库（owner/repo，可多个；留空 = 不启用该源）'),
     skillsMarketUrl: z
         .string()
-        .default('https://raw.githubusercontent.com/nightfun-pixel/dsh-skills-market/HEAD/data/catalog.json')
-        .description('DSH 社区精选技能目录（单文件静态 JSON，条目自带 SKILL.md 的 raw 地址）'),
+        .default('')
+        .description('单文件技能目录 URL（条目自带 SKILL.md 的 raw 地址；留空 = 不启用该源）'),
     githubTokenEnv: z.string().default('GITHUB_TOKEN').description('GitHub token 所在的环境变量名'),
     expertsMarketUrl: z
         .string()
-        .default('https://dsh-market.com')
-        .description('社区预设市场基址（/manifest/presets.json 与 /assets/presets/<id>/<file>）'),
+        .default('')
+        .description('专家预设市场基址（/manifest/presets.json 与 /assets/presets/<id>/<file>；留空 = 不启用该源）'),
     agencyAgentsRepo: z
         .string()
-        .default('msitarzewski/agency-agents')
-        .description('agency-agents 上游仓库（owner/repo）；人设按 divisions.json 白名单枚举，正文合成专家组合'),
+        .default('')
+        .description('agency-agents 人设仓库（owner/repo；divisions.json 白名单枚举；留空 = 不启用该源）'),
     mcpRegistryUrl: z
         .string()
-        .default('https://registry.modelcontextprotocol.io/v0')
-        .description('官方 MCP Registry 基址'),
+        .default('')
+        .description('官方 MCP Registry 基址（留空 = 不启用该源）'),
     pluginsCatalogUrl: z
         .string()
-        .default('https://awesome-dsh-plugin.com/plugins.json')
-        .description('插件广场数据源（awesome-dsh-plugin 的 plugins.json）'),
+        .default('')
+        .description('插件目录数据源（plugins.json；留空 = 不启用该源）'),
     pluginsCatalogTimeoutMs: z
         .natural()
         .default(120000)

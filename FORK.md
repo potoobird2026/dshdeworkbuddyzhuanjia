@@ -9,7 +9,9 @@
 #   3. pnpm-workspace.yaml 允许 esbuild 构建脚本
 #   4. 插件安装流程识别桌面端 / Web 端并生成对应的安装命令，避免装错 profile
 #      （桌面端 `dsh plugin add <spec>` 由 App 托管；Web 端 `--profile web`）
-#   5. 当前为「纯插件」形态：不捆绑技能/专家/连接器内容；内容格式见 catalog/README.md
+#   5. 取消上游默认拉取公开社区目录：全部远程内容源改为配置启用（留空 = 不注册），
+#      默认一个不拉；广场只保留「我的提交」与「自建目录」
+#   6. 当前为「纯插件」形态：不捆绑技能/专家/连接器内容；内容格式见 catalog/README.md
 #
 # 构建：pnpm install && pnpm build
 # 安装：

@@ -5,10 +5,11 @@
 #   Web 端：dsh plugin --profile web add github:potoobird2026/dshdeworkbuddyzhuanjia
 # 安装后需重启 harness（桌面端：退出并重新打开 DSH Desktop）。
 #
-# 本仓库目前是「纯插件」形态：不捆绑任何技能/专家/连接器内容。
-# 内容源沿用插件默认值；想换成自托管内容时，参考 catalog/README.md 的
-# 格式说明，把 skillsGithubRepos / agencyAgentsRepo / customCatalogs
-# 等配置加回来即可。
+# 本仓库目前是「纯插件」形态：不捆绑任何技能/专家/连接器内容，
+# 且**默认不拉取任何公开社区目录**（skillsGithubRepos / skillsMarketUrl /
+# expertsMarketUrl / agencyAgentsRepo / mcpRegistryUrl / pluginsCatalogUrl
+# 默认全为空 = 对应远程源不注册）。想接入内容时，在下面的 config 里
+# 按 catalog/README.md 的格式说明配置自己的仓库/目录地址。
 - insert:
     - id: square
       name: 'dsh-squares'
