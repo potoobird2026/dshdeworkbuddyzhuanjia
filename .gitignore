@@ -1,0 +1,18 @@
+# 依赖
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# 构建中转区（esbuild 临时文件，构建后即删）
+build/
+dist/
+*.tsbuildinfo
+
+# 测试与日志
+*.log
+
+# 编辑器/系统杂项
+.DS_Store
+.idea/
+# .vscode/
+*.swp
