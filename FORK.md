@@ -12,6 +12,9 @@
 #   5. 取消上游默认拉取公开社区目录：全部远程内容源改为配置启用（留空 = 不注册），
 #      默认一个不拉；广场只保留「我的提交」与「自建目录」
 #   6. 当前为「纯插件」形态：不捆绑技能/专家/连接器内容；内容格式见 catalog/README.md
+#   7. 新增 SkillHub 内容源（技能 + 插件）：skillHubApiUrl 留空 = 不启用，
+#      本部署在 cordis.patch.yml 里显式启用 https://api.skillhub.cn
+#      （技能 = /api/skills + zip 安装；插件 = /api/v1/plugins + github 规格）
 #
 # 构建：pnpm install && pnpm build
 # 安装：
