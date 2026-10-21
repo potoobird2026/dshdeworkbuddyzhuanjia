@@ -1,0 +1,5 @@
+# 允许 esbuild 执行安装脚本（pnpm 供应链防护白名单）
+onlyBuiltDependencies:
+  - esbuild
+allowBuilds:
+  esbuild: true

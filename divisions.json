@@ -1,0 +1,13 @@
+{
+  "divisions": {
+    "workbuddy": {
+      "label": "WorkBuddy 专家"
+    },
+    "dev": {
+      "label": "开发专家"
+    },
+    "life": {
+      "label": "生活助理"
+    }
+  }
+}

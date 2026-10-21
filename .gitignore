@@ -4,7 +4,8 @@ node_modules/
 pnpm-lock.yaml
 
 # 构建中转区（esbuild 临时文件，构建后即删）
-build/
+# 注意：build/ 构建产物必须提交（git 源安装无 prepare 脚本）
+build/.tmp/
 dist/
 *.tsbuildinfo
 
