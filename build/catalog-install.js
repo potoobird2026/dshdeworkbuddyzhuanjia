@@ -492,7 +492,7 @@ export class CatalogInstaller {
         if (hint.kind !== 'plugin') {
             throw new CatalogError(`条目 ${item.name} 不是插件`, 'bad-kind', 400);
         }
-        const command = hint.command ?? `dsh plugin --profile <profile> add ${hint.package}`;
+        const command = this.deps.installHint('add', hint.package);
         const manager = this.requirePluginManager(command);
         let result;
         try {
@@ -532,7 +532,7 @@ export class CatalogInstaller {
     }
     /** 插件卸载：同样交给 pluginManager（= `dsh plugin remove`）。 */
     async removePlugin(spec) {
-        const manager = this.requirePluginManager(`dsh plugin --profile <profile> remove ${spec}`);
+        const manager = this.requirePluginManager(this.deps.installHint('remove', spec));
         let result;
         try {
             result = await manager.removeBundle(spec);

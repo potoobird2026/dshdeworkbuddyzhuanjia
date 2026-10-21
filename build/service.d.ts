@@ -10,6 +10,7 @@ import { SkillsDomain } from './skills.js';
 import type { CatalogDetail, CatalogKind, CatalogQuery, SourceStatus } from './catalog.js';
 import { CatalogInstaller, SourceRegistry } from './catalog-install.js';
 import { CatalogExporter, type SubmitInput, type SubmitOutcome } from './catalog-export.js';
+import type { RuntimeMode } from './plugins.js';
 import { DeckStore } from './store.js';
 import type { Capabilities, ConnectorRecord, DeckStatus, PluginChangeResult, PluginsView } from './types.js';
 /** 插件运行期状态与各领域的收口。 */
@@ -90,6 +91,8 @@ export declare class SquareService {
         name: string;
         dir: string;
     };
+    /** 当前宿主形态：桌面客户端 / Web 端（安装命令与托管语义按此分流）。 */
+    runtimeMode(): RuntimeMode;
     /** 当前 profile 已安装的包名（dependencies），用于广场的「已安装」标记。 */
     private profilePluginNames;
     /** 现取 profile 插件管理服务（可能晚到，也可能不存在）。 */

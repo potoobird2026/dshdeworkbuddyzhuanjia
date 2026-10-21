@@ -11,7 +11,7 @@ import { CatalogInstaller, SourceRegistry, changeErrorText, makeSourceCtx } from
 import { CatalogExporter, MySubmissionsSource, submissionsCatalogPath } from './catalog-export.js';
 import { AgencyAgentsSource, AwesomeDshPluginsSource, CustomCatalogSource, DshMarketExpertsSource, DshSkillsMarketSource, GitHubSkillsSource, McpOfficialSource, specSourceOf, } from './catalog-sources.js';
 import { categoryList } from './catalog-categories.js';
-import { markInstalledPlugins, normalizePluginsView, profileFromContext, profileLocation, readPendingBuilds, readProfileManifest, readProfilePlugins, toChangeResult, withProfileInstallCommand, } from './plugins.js';
+import { detectRuntimeMode, manualPluginCommand, markInstalledPlugins, normalizePluginsView, profileFromContext, profileLocation, readPendingBuilds, readProfileManifest, readProfilePlugins, toChangeResult, withProfileInstallCommand, } from './plugins.js';
 import { DeckStore } from './store.js';
 /** 最近错误上限。 */
 const MAX_ERRORS = 20;
@@ -76,6 +76,7 @@ export class SquareService {
                 fetcher,
                 connectorsChanged: () => this.connectorsChanged(),
                 pluginManager: () => this.livePluginManager(),
+                installHint: (verb, spec) => manualPluginCommand(this.runtimeMode(), this.profile().name, verb, spec),
             });
             this.exporter = new CatalogExporter(ctx, config, paths, this.skills, this.connectors, (id) => this.store.getExpert(id), (id) => this.store.getConnector(id), (name) => this.localPluginExport(name));
         }
@@ -229,6 +230,10 @@ export class SquareService {
     profile() {
         return profileFromContext(this.ctx) ?? profileLocation();
     }
+    /** 当前宿主形态：桌面客户端 / Web 端（安装命令与托管语义按此分流）。 */
+    runtimeMode() {
+        return detectRuntimeMode(this.ctx, this.profile().name);
+    }
     /** 当前 profile 已安装的包名（dependencies），用于广场的「已安装」标记。 */
     async profilePluginNames() {
         const rows = await readProfilePlugins(this.profile().dir);
@@ -341,7 +346,7 @@ export class SquareService {
      * profile（比如桌面端）就是错的。
      */
     withProfileCommand(item) {
-        return withProfileInstallCommand(item, this.profile().name);
+        return withProfileInstallCommand(item, this.profile().name, this.runtimeMode());
     }
     /** 广场：安装。 */
     async catalogInstall(sourceId, id, options = {}) {
@@ -500,6 +505,7 @@ export class SquareService {
             `诊断：profileContext=${probeService(this.ctx, 'profileContext')} · ` +
                 `pluginManager=${probeService(this.ctx, 'pluginManager')} · ` +
                 `profile=${this.profile().dir === '' ? '未知' : this.profile().dir}`,
+            `mode=${this.runtimeMode()}`,
         ];
         if (status.connectors.length > 0) {
             lines.push(`连接器：${status.connectors

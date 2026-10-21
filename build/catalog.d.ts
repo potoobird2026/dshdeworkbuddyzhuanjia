@@ -66,15 +66,16 @@ export type CatalogInstallHint = {
     /**
      * 可执行的安装命令。
      *
-     * 由宿主按**当前环境**生成（`dsh plugin --profile <当前 profile> add <spec>`），
-     * 不照抄上游——上游那份写死 `--profile web`，换到桌面端就是错的。
+     * 由宿主按**当前运行形态**生成（桌面端 `dsh plugin add <spec>`；
+     * Web 端 `dsh plugin --profile web add <spec>`），不照抄上游——上游那份
+     * 写死 `--profile web`，照搬到桌面端就会装错 profile。
      */
     command?: string;
     /** 上游原始命令（可能写死别的 profile，只作参考）。 */
     upstreamCommand?: string;
     /** 当前 profile 名（未知时为空串）。 */
     profile?: string;
-    /** 该 profile 的包操作由 App 独占（`dsh plugin --profile desktop` 会被拒绝）。 */
+    /** 桌面端：该 profile 的包操作由 App 独占（`--profile desktop` 会被 CLI 拒绝）。 */
     managed?: boolean;
     /** 插件声明的能力（fs-read / shell / network …）。 */
     capabilities?: string[];

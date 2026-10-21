@@ -66,6 +66,11 @@ export interface InstallerDeps {
      * 必须是 getter：服务可能晚于本插件激活，也可能在降级部署里根本不存在。
      */
     pluginManager: () => PluginManagerService | undefined;
+    /**
+     * 按当前运行形态（桌面端 / Web 端）生成手动 `dsh plugin` 命令文本。
+     * 只用于错误提示与面板展示；实际安装走 pluginManager，天然落在当前 profile。
+     */
+    installHint: (verb: 'add' | 'remove', spec: string) => string;
 }
 /** 安装选项。 */
 export interface InstallOptions {

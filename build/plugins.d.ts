@@ -76,12 +76,33 @@ export declare function readProfilePlugins(profileDir: string): Promise<PluginBu
 export declare function readPendingBuilds(profileDir: string): Promise<string[]>;
 /** `ctx.pluginManager` 的写操作结果 → 面板要的形状。 */
 export declare function toChangeResult(result: ChangeResultLike, target: string): PluginChangeResult;
+/** 宿主运行形态：桌面客户端（DSH Desktop）/ Web 端（dsh web）/ 无法判定。 */
+export type RuntimeMode = 'desktop' | 'web' | 'unknown';
+/**
+ * 识别宿主运行在桌面客户端还是 Web 端。
+ *
+ * 判据按可靠度递减：
+ *   1) 桌面 shell 服务在场（`desktopShell` / `desktopBrowserAccess`）→ desktop；
+ *   2) profile 名 `desktop` / `web` 直接对应两端；
+ *   3) 进程带 Electron 标记且不是 web profile → desktop；
+ *   4) 都判不出 → unknown（安装命令退化成不带 `--profile` 的安全形式，
+ *      **绝不猜一个 profile 名糊上去**，避免装错端）。
+ */
+export declare function detectRuntimeMode(ctx: HostCtx, profileName: string): RuntimeMode;
+/**
+ * 按运行形态生成**手动安装/卸载命令**：
+ *   - desktop：桌面 shim 的 `dsh` 不带 `--profile` 时作用于当前桌面 profile；
+ *     带 `--profile desktop` 反而会被 App 的 manifest 锁拒绝，故从不生成。
+ *   - web：显式 `--profile web`（或当前 profile 名）。
+ *   - unknown：不带 profile 参数的中性形式，并提示按端补参数。
+ */
+export declare function manualPluginCommand(mode: RuntimeMode, profile: string, verb: 'add' | 'remove', spec: string): string;
 /**
  * 插件条目 → 带**当前环境**安装命令的条目。
  *
  * 上游 awesome-dsh-plugin 的 `install` 字段写死了 `dsh plugin --profile web add …`，
- * 照抄到别的 profile（比如桌面端）就是错的：这里按宿主真正运行的 profile 重新拼
- * 命令，并把上游原文降级成「仅供参考」。桌面端 profile 的包操作由 App 独占
- * （`dsh plugin --profile desktop` 会被 CLI 拒绝），额外标 `managed` 供面板提示。
+ * 照抄到别的 profile（比如桌面端）就是错的：这里按宿主实际运行形态（桌面/Web）
+ * 重新拼命令，上游原文降级成「仅供参考」。桌面端 profile 的包操作由 App 独占，
+ * 额外标 `managed` 供面板提示。
  */
-export declare function withProfileInstallCommand(item: CatalogItem, profile: string): CatalogItem;
+export declare function withProfileInstallCommand(item: CatalogItem, profile: string, mode?: RuntimeMode): CatalogItem;

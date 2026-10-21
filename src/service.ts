@@ -26,6 +26,8 @@ import {
 import { categoryList } from './catalog-categories.js';
 import type { LocalPluginExport } from './catalog-export.js';
 import {
+  detectRuntimeMode,
+  manualPluginCommand,
   markInstalledPlugins,
   normalizePluginsView,
   profileFromContext,
@@ -36,6 +38,7 @@ import {
   toChangeResult,
   withProfileInstallCommand,
 } from './plugins.js';
+import type { RuntimeMode } from './plugins.js';
 import { DeckStore } from './store.js';
 import type {
   Capabilities,
@@ -106,6 +109,8 @@ export class SquareService {
         fetcher,
         connectorsChanged: () => this.connectorsChanged(),
         pluginManager: () => this.livePluginManager(),
+        installHint: (verb, spec) =>
+          manualPluginCommand(this.runtimeMode(), this.profile().name, verb, spec),
       });
       this.exporter = new CatalogExporter(
         ctx,
@@ -289,6 +294,11 @@ export class SquareService {
     return profileFromContext(this.ctx) ?? profileLocation();
   }
 
+  /** 当前宿主形态：桌面客户端 / Web 端（安装命令与托管语义按此分流）。 */
+  runtimeMode(): RuntimeMode {
+    return detectRuntimeMode(this.ctx, this.profile().name);
+  }
+
   /** 当前 profile 已安装的包名（dependencies），用于广场的「已安装」标记。 */
   private async profilePluginNames(): Promise<Set<string>> {
     const rows = await readProfilePlugins(this.profile().dir);
@@ -416,7 +426,7 @@ export class SquareService {
    * profile（比如桌面端）就是错的。
    */
   private withProfileCommand(item: CatalogItem): CatalogItem {
-    return withProfileInstallCommand(item, this.profile().name);
+    return withProfileInstallCommand(item, this.profile().name, this.runtimeMode());
   }
 
   /** 广场：安装。 */
@@ -584,6 +594,7 @@ export class SquareService {
       `诊断：profileContext=${probeService(this.ctx, 'profileContext')} · ` +
         `pluginManager=${probeService(this.ctx, 'pluginManager')} · ` +
         `profile=${this.profile().dir === '' ? '未知' : this.profile().dir}`,
+        `mode=${this.runtimeMode()}`,
     ];
     if (status.connectors.length > 0) {
       lines.push(

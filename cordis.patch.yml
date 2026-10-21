@@ -1,19 +1,14 @@
 # dsh-squares bundle patch（个人定制版）
 #
 # 安装：
-#   dsh plugin add github:potoobird2026/dshdeworkbuddyzhuanjia
+#   桌面端：dsh plugin add github:potoobird2026/dshdeworkbuddyzhuanjia
+#   Web 端：dsh plugin --profile web add github:potoobird2026/dshdeworkbuddyzhuanjia
 # 安装后需重启 harness（桌面端：退出并重新打开 DSH Desktop）。
 #
-# ── 内容源配置 ────────────────────────────────────────────────
-# 广场里的技能 / 专家 / 连接器全部来自下面的数据源，默认全部指向
-# 本仓库（potoobird2026/dshdeworkbuddyzhuanjia）的 catalog/ 目录：
-#
-#   技能   skillsGithubRepos  → 仓库内所有含 SKILL.md 的目录（skills/）
-#          skillsMarketUrl    → catalog/skills-market.json（单文件目录）
-#   专家   agencyAgentsRepo   → divisions.json + 分区目录下的人设 md
-#   连接器 customCatalogs     → catalog/plaza.json（square-catalog/1）
-#
-# 想换成别的仓库 / 关掉某个源，直接改下面的值。
+# 本仓库目前是「纯插件」形态：不捆绑任何技能/专家/连接器内容。
+# 内容源沿用插件默认值；想换成自托管内容时，参考 catalog/README.md 的
+# 格式说明，把 skillsGithubRepos / agencyAgentsRepo / customCatalogs
+# 等配置加回来即可。
 - insert:
     - id: square
       name: 'dsh-squares'
@@ -24,14 +19,3 @@
         enableConnectors: true
         enablePlugins: true
         enableTool: true
-        # ── 内容源 ──
-        skillsGithubRepos:
-          - potoobird2026/dshdeworkbuddyzhuanjia
-        skillsMarketUrl: https://raw.githubusercontent.com/potoobird2026/dshdeworkbuddyzhuanjia/HEAD/catalog/skills-market.json
-        agencyAgentsRepo: potoobird2026/dshdeworkbuddyzhuanjia
-        customCatalogs:
-          - https://raw.githubusercontent.com/potoobird2026/dshdeworkbuddyzhuanjia/HEAD/catalog/plaza.json
-        # 以下保持上游默认（如需自托管可自行替换）：
-        # presetsMarketUrl: https://dsh-market.com          # 专家预设市场
-        # pluginsCatalogUrl: https://awesome-dsh-plugin.com/plugins.json
-        # mcpRegistryUrl: https://registry.modelcontextprotocol.io/v0

@@ -340,6 +340,11 @@ export interface InstallerDeps {
    * 必须是 getter：服务可能晚于本插件激活，也可能在降级部署里根本不存在。
    */
   pluginManager: () => PluginManagerService | undefined;
+  /**
+   * 按当前运行形态（桌面端 / Web 端）生成手动 `dsh plugin` 命令文本。
+   * 只用于错误提示与面板展示；实际安装走 pluginManager，天然落在当前 profile。
+   */
+  installHint: (verb: 'add' | 'remove', spec: string) => string;
 }
 
 /** 安装选项。 */
@@ -589,7 +594,7 @@ export class CatalogInstaller {
     if (hint.kind !== 'plugin') {
       throw new CatalogError(`条目 ${item.name} 不是插件`, 'bad-kind', 400);
     }
-    const command = hint.command ?? `dsh plugin --profile <profile> add ${hint.package}`;
+    const command = this.deps.installHint('add', hint.package);
     const manager = this.requirePluginManager(command);
     let result: ChangeResultLike;
     try {
@@ -637,7 +642,7 @@ export class CatalogInstaller {
 
   /** 插件卸载：同样交给 pluginManager（= `dsh plugin remove`）。 */
   private async removePlugin(spec: string): Promise<void> {
-    const manager = this.requirePluginManager(`dsh plugin --profile <profile> remove ${spec}`);
+    const manager = this.requirePluginManager(this.deps.installHint('remove', spec));
     let result: ChangeResultLike;
     try {
       result = await manager.removeBundle(spec);
