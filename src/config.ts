@@ -70,6 +70,8 @@ export interface SquareConfig {
   pluginsCatalogUrl: string;
   /** 插件广场数据源的单次请求超时（毫秒；5MB+ 的源比默认 20s 需要更长）。 */
   pluginsCatalogTimeoutMs: number;
+  /** SkillHub API 基址（留空 = 不启用 SkillHub 技能/插件源）。 */
+  skillHubApiUrl: string;
   /** 自托管目录 URL 列表（square-catalog/1）。 */
   customCatalogs: string[];
   /** 目录缓存 TTL（毫秒）。 */
@@ -141,6 +143,10 @@ export const Config: any = z.object({
     .natural()
     .default(120000)
     .description('插件广场数据源的单次请求超时（毫秒；整份 JSON 5MB+，默认 2 分钟）'),
+  skillHubApiUrl: z
+    .string()
+    .default('')
+    .description('SkillHub API 基址（https://api.skillhub.cn；留空 = 不启用该源）'),
   customCatalogs: z.array(String).default([]).description('自托管目录 URL（square-catalog/1）'),
   catalogTtlMs: z.natural().default(30 * 60 * 1000).description('目录缓存 TTL（毫秒）'),
   catalogPageSize: z.natural().default(24).description('广场每页条目数'),

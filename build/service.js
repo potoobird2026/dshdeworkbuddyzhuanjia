@@ -9,7 +9,7 @@ import { SkillsDomain } from './skills.js';
 import { CachedFetcher, CatalogError } from './catalog.js';
 import { CatalogInstaller, SourceRegistry, changeErrorText, makeSourceCtx } from './catalog-install.js';
 import { CatalogExporter, MySubmissionsSource, submissionsCatalogPath } from './catalog-export.js';
-import { AgencyAgentsSource, AwesomeDshPluginsSource, CustomCatalogSource, DshMarketExpertsSource, DshSkillsMarketSource, GitHubSkillsSource, McpOfficialSource, specSourceOf, } from './catalog-sources.js';
+import { AgencyAgentsSource, AwesomeDshPluginsSource, CustomCatalogSource, DshMarketExpertsSource, DshSkillsMarketSource, GitHubSkillsSource, McpOfficialSource, SkillHubPluginsSource, SkillHubSkillsSource, specSourceOf, } from './catalog-sources.js';
 import { categoryList } from './catalog-categories.js';
 import { detectRuntimeMode, manualPluginCommand, markInstalledPlugins, normalizePluginsView, profileFromContext, profileLocation, readPendingBuilds, readProfileManifest, readProfilePlugins, toChangeResult, withProfileInstallCommand, } from './plugins.js';
 import { DeckStore } from './store.js';
@@ -63,6 +63,9 @@ export class SquareService {
                 ...(config.agencyAgentsRepo !== '' ? [new AgencyAgentsSource()] : []),
                 ...(config.mcpRegistryUrl !== '' ? [new McpOfficialSource()] : []),
                 ...(config.pluginsCatalogUrl !== '' ? [new AwesomeDshPluginsSource()] : []),
+                ...(config.skillHubApiUrl !== ''
+                    ? [new SkillHubSkillsSource(), new SkillHubPluginsSource()]
+                    : []),
                 new CustomCatalogSource(),
             ];
             this.registry = new SourceRegistry(sources, makeSourceCtx(ctx, config, paths, fetcher));

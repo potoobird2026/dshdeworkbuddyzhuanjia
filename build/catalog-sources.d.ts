@@ -153,3 +153,23 @@ export declare class AgencyAgentsSource implements CatalogSource {
 export declare function sortItems(items: CatalogItem[], sort: CatalogQuery['sort']): CatalogItem[];
 /** 计算安装溯源用的哈希。 */
 export declare function hashContent(parts: string[]): string;
+/** SkillHub 技能源：列表走 /api/skills，安装载荷是 /api/v1/download 的 zip。 */
+export declare class SkillHubSkillsSource implements CatalogSource {
+    readonly id = "skillhub-skills";
+    readonly label = "SkillHub \u6280\u80FD";
+    readonly kind: "skill";
+    readonly installable = true;
+    readonly paginated = true;
+    list(query: CatalogQuery, ctx: SourceCtx): Promise<CatalogPage>;
+    item(id: string, ctx: SourceCtx): Promise<CatalogDetail>;
+}
+/** SkillHub 插件源：/api/v1/plugins，安装规格直接是仓库地址。 */
+export declare class SkillHubPluginsSource implements CatalogSource {
+    readonly id = "skillhub-plugins";
+    readonly label = "SkillHub \u63D2\u4EF6";
+    readonly kind: "plugin";
+    readonly installable = true;
+    readonly paginated = true;
+    list(query: CatalogQuery, ctx: SourceCtx): Promise<CatalogPage>;
+    item(id: string, ctx: SourceCtx): Promise<CatalogDetail>;
+}

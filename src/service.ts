@@ -21,6 +21,8 @@ import {
   DshSkillsMarketSource,
   GitHubSkillsSource,
   McpOfficialSource,
+  SkillHubPluginsSource,
+  SkillHubSkillsSource,
   specSourceOf,
 } from './catalog-sources.js';
 import { categoryList } from './catalog-categories.js';
@@ -96,6 +98,9 @@ export class SquareService {
         ...(config.agencyAgentsRepo !== '' ? [new AgencyAgentsSource()] : []),
         ...(config.mcpRegistryUrl !== '' ? [new McpOfficialSource()] : []),
         ...(config.pluginsCatalogUrl !== '' ? [new AwesomeDshPluginsSource()] : []),
+        ...(config.skillHubApiUrl !== ''
+          ? [new SkillHubSkillsSource(), new SkillHubPluginsSource()]
+          : []),
         new CustomCatalogSource(),
       ];
       this.registry = new SourceRegistry(sources, makeSourceCtx(ctx, config, paths, fetcher));

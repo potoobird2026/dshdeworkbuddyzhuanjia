@@ -24,6 +24,8 @@ import { CatalogError } from './catalog.js';
 // 只有人设正文的外部专家源（agency-agents）靠它合成与自建专家同形的组合。
 import { personaComposition } from './experts.js';
 import { parseFrontmatter } from './frontmatter.js';
+// SkillHub 的技能包是 zip：安装前先展开成文件列表。
+import { unzipEntries } from './zip.js';
 
 /** 一批 JSON 里安全取数组。 */
 function asArray(value: unknown): unknown[] {
@@ -1116,4 +1118,192 @@ export function hashContent(parts: string[]): string {
   const hash = createHash('sha256');
   for (const part of parts) hash.update(part);
   return hash.digest('hex').slice(0, 16);
+}
+
+// ===========================================================================
+// 8) SkillHub（技能 / 插件；配置 skillHubApiUrl 后启用）
+// ===========================================================================
+
+/** 技能包里进安装载荷的文本后缀（二进制附件随包丢弃，安装器只吃文本）。 */
+const SKILLHUB_TEXT_FILE =
+  /\.(?:md|markdown|txt|ya?ml|json|js|mjs|cjs|ts|tsx|jsx|py|sh|bash|toml|ini|cfg|conf|csv|tsv|html|css|sql|xml)$/iu;
+
+/** SkillHub API 基址（去掉结尾斜杠；未配置时报错）。 */
+function skillHubBase(ctx: SourceCtx): string {
+  const url = ctx.config.skillHubApiUrl.replace(/\/+$/u, '');
+  if (url === '') throw new CatalogError('skillHubApiUrl 未配置', 'bad-config', 400);
+  return url;
+}
+
+/** 游标 → 页码（空游标 = 第一页）。 */
+function skillHubPage(query: CatalogQuery): number {
+  const parsed = Number.parseInt(query.cursor ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+/** SkillHub 技能源：列表走 /api/skills，安装载荷是 /api/v1/download 的 zip。 */
+export class SkillHubSkillsSource implements CatalogSource {
+  readonly id = 'skillhub-skills';
+  readonly label = 'SkillHub 技能';
+  readonly kind = 'skill' as const;
+  readonly installable = true;
+  readonly paginated = true;
+
+  async list(query: CatalogQuery, ctx: SourceCtx): Promise<CatalogPage> {
+    const page = skillHubPage(query);
+    const limit = query.limit ?? ctx.config.catalogPageSize;
+    const search = new URLSearchParams({ limit: String(limit), page: String(page) });
+    const category = query.category;
+    if (category !== undefined && category !== '' && category !== 'all') search.set('category', category);
+    const payload = (await ctx.json(`${skillHubBase(ctx)}/api/skills?${search.toString()}`, {
+      ttlMs: ctx.config.catalogTtlMs,
+    })) as Record<string, unknown>;
+    const data = payload['data'] as Record<string, unknown> | undefined;
+    const items: CatalogItem[] = [];
+    for (const raw of asArray(data?.['skills'])) {
+      const item = skillHubSkillItem(raw as Record<string, unknown>, this.id);
+      if (item === undefined) continue;
+      if (query.q !== undefined && query.q !== '' && !matchQuery(item, query.q)) continue;
+      items.push(item);
+    }
+    const total = typeof data?.['total'] === 'number' ? data['total'] : undefined;
+    return {
+      items: sortItems(items, query.sort),
+      ...(total === undefined ? {} : { total }),
+      ...(asArray(data?.['skills']).length >= limit ? { nextCursor: String(page + 1) } : {}),
+    };
+  }
+
+  async item(id: string, ctx: SourceCtx): Promise<CatalogDetail> {
+    const detail = (await ctx.json(`${skillHubBase(ctx)}/api/v1/skills/${encodeURIComponent(id)}`, {
+      ttlMs: ctx.config.catalogTtlMs,
+    })) as Record<string, unknown>;
+    const skill = detail['skill'] as Record<string, unknown> | undefined;
+    const latest = detail['latestVersion'] as Record<string, unknown> | undefined;
+    const row = { ...(skill ?? {}), slug: id, ...(str(latest?.['version']) === undefined ? {} : { version: str(latest?.['version']) }) };
+    const item = skillHubSkillItem(row, this.id) ?? skillHubSkillItem({ slug: id }, this.id);
+    if (item === undefined) throw new CatalogError(`SkillHub 里找不到技能 ${id}`, 'not-found', 404);
+    const bytes = await ctx.bytes(`${skillHubBase(ctx)}/api/v1/download?slug=${encodeURIComponent(id)}&source=dsh`);
+    const archived = [...unzipEntries(bytes).keys()].filter((path) => !path.endsWith('/'));
+    // 有的包把整个技能套在一层目录里：剥掉公共前缀，保证 SKILL.md 落在根上。
+    const prefix = skillHubZipPrefix(archived);
+    const files: CatalogFile[] = [];
+    let preview: string | undefined;
+    for (const [path, data] of unzipEntries(bytes)) {
+      if (path.endsWith('/') || !SKILLHUB_TEXT_FILE.test(path)) continue;
+      const relative = prefix === '' ? path : path.slice(prefix.length);
+      if (relative === '') continue;
+      const text = new TextDecoder().decode(data);
+      if (relative === 'SKILL.md') preview ??= text;
+      files.push({ path: relative, text });
+    }
+    if (files.length === 0) {
+      throw new CatalogError(`技能包 ${id} 里没有可安装的文本文件`, 'not-installable', 400);
+    }
+    return { item, files, ...(preview === undefined ? {} : { preview }) };
+  }
+}
+
+/** 技能包的公共目录前缀（根目录已有文件时为空串）。 */
+function skillHubZipPrefix(paths: string[]): string {
+  const roots = paths.filter((path) => path.includes('/'));
+  if (roots.length !== paths.length || paths.length === 0) return '';
+  const head = roots[0]?.split('/')[0] ?? '';
+  if (head === '') return '';
+  return roots.every((path) => path.startsWith(`${head}/`)) ? `${head}/` : '';
+}
+
+/** SkillHub 列表行 → CatalogItem。 */
+function skillHubSkillItem(raw: Record<string, unknown>, sourceId: string): CatalogItem | undefined {
+  const id = str(raw['slug']);
+  if (id === undefined || id === '') return undefined;
+  const subCategories = asArray(raw['subCategories'])
+    .map((entry) => str((entry as Record<string, unknown>)['name']))
+    .filter((name): name is string => typeof name === 'string' && name !== '');
+  const tags = asArray(raw['tags']).filter((tag): tag is string => typeof tag === 'string');
+  const downloads = typeof raw['downloads'] === 'number' ? raw['downloads'] : undefined;
+  const stars = typeof raw['stars'] === 'number' ? raw['stars'] : undefined;
+  const version = str(raw['version']);
+  return {
+    sourceId,
+    kind: 'skill',
+    id,
+    name: str(raw['name']) ?? id,
+    description: str(raw['description_zh']) ?? str(raw['description']) ?? '',
+    ...(version === undefined ? {} : { version }),
+    ...(str(raw['ownerName']) === undefined ? {} : { author: str(raw['ownerName']) }),
+    ...(str(raw['homepage']) === undefined ? {} : { homepage: str(raw['homepage']) }),
+    ...(str(raw['iconUrl']) === undefined ? {} : { icon: str(raw['iconUrl']) }),
+    ...(str(raw['category']) === undefined ? {} : { category: str(raw['category']) }),
+    tags: [...subCategories, ...tags],
+    ...(downloads === undefined && stars === undefined ? {} : { stats: { ...(downloads === undefined ? {} : { downloads }), ...(stars === undefined ? {} : { stars }) } }),
+    trust: { official: raw['verified'] === true },
+    install: { kind: 'skill' },
+  };
+}
+
+/** SkillHub 插件源：/api/v1/plugins，安装规格直接是仓库地址。 */
+export class SkillHubPluginsSource implements CatalogSource {
+  readonly id = 'skillhub-plugins';
+  readonly label = 'SkillHub 插件';
+  readonly kind = 'plugin' as const;
+  readonly installable = true;
+  readonly paginated = true;
+
+  async list(query: CatalogQuery, ctx: SourceCtx): Promise<CatalogPage> {
+    const page = skillHubPage(query);
+    const limit = query.limit ?? ctx.config.catalogPageSize;
+    const search = new URLSearchParams({ limit: String(limit), page: String(page) });
+    const category = query.category;
+    if (category !== undefined && category !== '' && category !== 'all') search.set('categoryKey', category);
+    const payload = (await ctx.json(`${skillHubBase(ctx)}/api/v1/plugins?${search.toString()}`, {
+      ttlMs: ctx.config.catalogTtlMs,
+    })) as Record<string, unknown>;
+    const rows = asArray(payload['items']);
+    const items: CatalogItem[] = [];
+    for (const raw of rows) {
+      const item = skillHubPluginItem(raw as Record<string, unknown>, this.id);
+      if (item === undefined) continue;
+      if (query.q !== undefined && query.q !== '' && !matchQuery(item, query.q)) continue;
+      items.push(item);
+    }
+    const total = typeof payload['total'] === 'number' ? payload['total'] : undefined;
+    return {
+      items: sortItems(items, query.sort),
+      ...(total === undefined ? {} : { total }),
+      ...(rows.length >= limit ? { nextCursor: String(page + 1) } : {}),
+    };
+  }
+
+  async item(id: string, ctx: SourceCtx): Promise<CatalogDetail> {
+    const page = await this.list({ kind: 'plugin', limit: ctx.config.catalogPageSize }, ctx);
+    const found = page.items.find((entry) => entry.id === id);
+    if (found === undefined) throw new CatalogError(`SkillHub 插件里找不到 ${id}`, 'not-found', 404);
+    return { item: found };
+  }
+}
+
+/** SkillHub 插件行 → CatalogItem。 */
+function skillHubPluginItem(raw: Record<string, unknown>, sourceId: string): CatalogItem | undefined {
+  const fullName = str(raw['fullName']);
+  const id = fullName ?? str(raw['name']);
+  if (id === undefined || id === '') return undefined;
+  const repo = str(raw['repositoryUrl']) ?? (fullName === undefined ? undefined : `https://github.com/${fullName}`);
+  const stars = typeof raw['stars'] === 'number' ? raw['stars'] : undefined;
+  return {
+    sourceId,
+    kind: 'plugin',
+    id,
+    name: str(raw['name']) ?? id,
+    description: str(raw['description']) ?? '',
+    ...(str(raw['owner']) === undefined ? {} : { author: str(raw['owner']) }),
+    ...(repo === undefined ? {} : { repo }),
+    homepage: str(raw['homepage']) ?? repo ?? '',
+    ...(str(raw['avatarUrl']) === undefined ? {} : { icon: str(raw['avatarUrl']) }),
+    ...(str(raw['categoryKey']) === undefined ? {} : { category: str(raw['categoryKey']) }),
+    tags: asArray(raw['topics']).filter((tag): tag is string => typeof tag === 'string'),
+    ...(stars === undefined ? {} : { stats: { stars } }),
+    trust: { official: raw['installability'] === 'verified' },
+    install: { kind: 'plugin', package: `github:${fullName ?? id}`, source: 'github' },
+  };
 }

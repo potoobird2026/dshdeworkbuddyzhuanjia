@@ -8,8 +8,10 @@
 # 本仓库目前是「纯插件」形态：不捆绑任何技能/专家/连接器内容，
 # 且**默认不拉取任何公开社区目录**（skillsGithubRepos / skillsMarketUrl /
 # expertsMarketUrl / agencyAgentsRepo / mcpRegistryUrl / pluginsCatalogUrl
-# 默认全为空 = 对应远程源不注册）。想接入内容时，在下面的 config 里
-# 按 catalog/README.md 的格式说明配置自己的仓库/目录地址。
+# 默认全为空 = 对应远程源不注册）。
+#
+# 唯独 SkillHub 是显式启用的（下面 skillHubApiUrl）：它提供技能与插件两个
+# 源，正好对应本插件的能力面；想关掉就把这一行注释掉或置空。
 - insert:
     - id: square
       name: 'dsh-squares'
@@ -20,3 +22,5 @@
         enableConnectors: true
         enablePlugins: true
         enableTool: true
+        # ── 内容源：SkillHub（技能 + 插件）──
+        skillHubApiUrl: https://api.skillhub.cn
